@@ -121,139 +121,168 @@ export default function Chat({ appName, parishName, contact }: Props) {
   }
 
   return (
-    <div className="shell">
-      <header className="top">
-        <div>
-          <h1>{appName}</h1>
-          <p className="sub">{parishName}</p>
-        </div>
-        <div className="top-actions">
-          {turns.length > 0 && (
-            <button type="button" className="link-btn" onClick={startOver}>
-              Start over
+    <>
+      <header className="band">
+        <div className="band-inner">
+          <div className="utility">
+            {turns.length > 0 && (
+              <button type="button" className="util-btn" onClick={startOver}>
+                Start over
+              </button>
+            )}
+            <button
+              type="button"
+              className="util-btn"
+              onClick={() => setShowContact((v) => !v)}
+              aria-expanded={showContact}
+            >
+              Talk to a person
             </button>
-          )}
-          <button type="button" className="link-btn" onClick={() => setShowContact((v) => !v)} aria-expanded={showContact}>
-            Talk to a person
-          </button>
+          </div>
+          <div className="brand">
+            <svg className="mark" viewBox="0 0 40 48" aria-hidden="true">
+              <circle cx="20" cy="14" r="9" fill="none" stroke="currentColor" strokeWidth="2.2" />
+              <path d="M20 2v44M11 14h18" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
+            </svg>
+            <div>
+              <h1>{appName}</h1>
+              <p className="tagline">{parishName}</p>
+            </div>
+          </div>
         </div>
       </header>
 
-      {showContact && (
-        <section className="contact" aria-label="Parish contact">
-          <p>For anything about your own situation, the sacraments, or pastoral care, the parish staff and priests are glad to help.</p>
-          <ul>
-            {!isPlaceholder(contact.phone) && (
-              <li>
-                Call: <a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}>{contact.phone}</a>
-              </li>
-            )}
-            {!isPlaceholder(contact.emergency) && (
-              <li>
-                Sacramental emergency after hours:{" "}
-                <a href={`tel:${contact.emergency.replace(/[^\d+]/g, "")}`}>{contact.emergency}</a>
-              </li>
-            )}
-            {!isPlaceholder(contact.email) && (
-              <li>
-                Email: <a href={`mailto:${contact.email}`}>{contact.email}</a>
-              </li>
-            )}
-            {!isPlaceholder(contact.website) && (
-              <li>
-                <a href={contact.website} target="_blank" rel="noopener noreferrer">
-                  Parish website
-                </a>
-              </li>
-            )}
-          </ul>
-          <p className="crisis">In a crisis, call or text <a href="tel:988">988</a>. In an emergency, call <a href="tel:911">911</a>.</p>
-        </section>
-      )}
+      <nav className="strip" aria-label="Quick questions">
+        <button type="button" onClick={() => ask("What are the Mass and Confession times?")} disabled={busy || atLimit}>
+          Mass &amp; Confession
+        </button>
+        <button type="button" onClick={() => ask("What are today's Mass readings?")} disabled={busy || atLimit}>
+          Readings
+        </button>
+        {!isPlaceholder(contact.website) && (
+          <a href={contact.website} target="_blank" rel="noopener noreferrer">
+            Parish Website
+          </a>
+        )}
+      </nav>
 
-      <main className="log" aria-live="polite">
-        {turns.length === 0 ? (
-          <section className="welcome">
-            <h2>Welcome.</h2>
-            <p>
-              Ask a question about the Catholic faith, today&apos;s readings, or life at {parishName}. Answers
-              cite the Catechism, Scripture, and Church documents.
-            </p>
-            <div className="chips">
-              {SUGGESTIONS.map((s) => (
-                <button key={s} type="button" className="chip" onClick={() => ask(s)}>
-                  {s}
-                </button>
-              ))}
-            </div>
+      <div className="shell">
+        {showContact && (
+          <section className="contact" aria-label="Parish contact">
+            <p>For anything about your own situation, the sacraments, or pastoral care, the parish staff and priests are glad to help.</p>
+            <ul>
+              {!isPlaceholder(contact.phone) && (
+                <li>
+                  Call: <a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}>{contact.phone}</a>
+                </li>
+              )}
+              {!isPlaceholder(contact.emergency) && (
+                <li>
+                  Sacramental emergency after hours:{" "}
+                  <a href={`tel:${contact.emergency.replace(/[^\d+]/g, "")}`}>{contact.emergency}</a>
+                </li>
+              )}
+              {!isPlaceholder(contact.email) && (
+                <li>
+                  Email: <a href={`mailto:${contact.email}`}>{contact.email}</a>
+                </li>
+              )}
+              {!isPlaceholder(contact.website) && (
+                <li>
+                  <a href={contact.website} target="_blank" rel="noopener noreferrer">
+                    Parish website
+                  </a>
+                </li>
+              )}
+            </ul>
+            <p className="crisis">In a crisis, call or text <a href="tel:988">988</a>. In an emergency, call <a href="tel:911">911</a>.</p>
           </section>
-        ) : (
-          turns.map((t, i) =>
-            t.role === "user" ? (
-              <div key={i} className="bubble user">
-                {t.content}
-              </div>
-            ) : t.content ? (
-              <div key={i} className="bubble assistant">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    a: ({ node: _node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
-                  }}
-                >
-                  {t.content}
-                </ReactMarkdown>
-              </div>
-            ) : null,
-          )
         )}
-        {busy && status && <div className="status">{status}</div>}
-        {error && (
-          <div className="error" role="alert">
-            {error}
-          </div>
-        )}
-        {atLimit && !busy && (
-          <div className="status">This conversation is at its limit. Tap &ldquo;Start over&rdquo; to ask something new.</div>
-        )}
-        <div ref={endRef} />
-      </main>
 
-      <form
-        className="composer"
-        onSubmit={(e) => {
-          e.preventDefault();
-          ask(input);
-        }}
-      >
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value.slice(0, MAX_CHARS))}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              ask(input);
-            }
+        <main className="log" aria-live="polite">
+          {turns.length === 0 ? (
+            <section className="welcome">
+              <h2>Welcome.</h2>
+              <p>
+                Ask a question about the Catholic faith, today&apos;s readings, or life at {parishName}. Answers
+                cite the Catechism, Scripture, and Church documents.
+              </p>
+              <div className="chips">
+                {SUGGESTIONS.map((s) => (
+                  <button key={s} type="button" className="chip" onClick={() => ask(s)}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : (
+            turns.map((t, i) =>
+              t.role === "user" ? (
+                <div key={i} className="bubble user">
+                  {t.content}
+                </div>
+              ) : t.content ? (
+                <div key={i} className="bubble assistant">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      a: ({ node: _node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
+                    }}
+                  >
+                    {t.content}
+                  </ReactMarkdown>
+                </div>
+              ) : null,
+            )
+          )}
+          {busy && status && <div className="status">{status}</div>}
+          {error && (
+            <div className="error" role="alert">
+              {error}
+            </div>
+          )}
+          {atLimit && !busy && (
+            <div className="status">This conversation is at its limit. Tap &ldquo;Start over&rdquo; to ask something new.</div>
+          )}
+          <div ref={endRef} />
+        </main>
+
+        <form
+          className="composer"
+          onSubmit={(e) => {
+            e.preventDefault();
+            ask(input);
           }}
-          placeholder="Ask a question…"
-          rows={1}
-          aria-label="Your question"
-          disabled={atLimit}
-        />
-        {busy ? (
-          <button type="button" className="send" onClick={() => abortRef.current?.abort()}>
-            Stop
-          </button>
-        ) : (
-          <button type="submit" className="send" disabled={!input.trim() || atLimit}>
-            Ask
-          </button>
-        )}
-      </form>
-      <p className="fine">
-        {appName} is an AI helper and can make mistakes. It isn&apos;t a priest and can&apos;t replace Confession or
-        pastoral care. Please don&apos;t share private details.
-      </p>
-    </div>
+        >
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value.slice(0, MAX_CHARS))}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                ask(input);
+              }
+            }}
+            placeholder="Ask a question…"
+            rows={1}
+            aria-label="Your question"
+            disabled={atLimit}
+          />
+          {busy ? (
+            <button type="button" className="send" onClick={() => abortRef.current?.abort()}>
+              Stop
+            </button>
+          ) : (
+            <button type="submit" className="send" disabled={!input.trim() || atLimit}>
+              Ask
+            </button>
+          )}
+        </form>
+        <p className="fine">
+          {appName} is an AI helper and can make mistakes. It isn&apos;t a priest and can&apos;t replace Confession or
+          pastoral care. Please don&apos;t share private details.
+        </p>
+      </div>
+    </>
   );
 }

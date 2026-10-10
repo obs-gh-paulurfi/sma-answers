@@ -1,31 +1,42 @@
+/* Colors follow saintmichaelcc.org: burgundy header band, white serif
+   lettering, light gray navigation strip, burgundy pill buttons. */
 :root {
-  --bg: #f7f3ec;
+  --bg: #eeeeee;
   --surface: #ffffff;
-  --text: #22201c;
-  --muted: #6b655c;
-  --accent: #1f4e79;
-  --accent-text: #ffffff;
-  --gold: #b08a3e;
-  --user-bubble: #1f4e79;
+  --text: #222222;
+  --muted: #5e5a5b;
+  --brand: #800020;
+  --brand-hover: #96142f;
+  --brand-text: #ffffff;
+  --brand-soft: #f0d2d9;
+  --strip: #dddddd;
+  --strip-text: #222222;
+  --link: #800020;
+  --user-bubble: #800020;
   --user-text: #ffffff;
-  --border: #e3dccf;
+  --border: #d6d2d3;
   --error-bg: #fbeaea;
   --error-text: #8a1f1f;
+  --serif: Georgia, "Times New Roman", serif;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #16171c;
-    --surface: #202229;
-    --text: #ece8e1;
-    --muted: #a39d93;
-    --accent: #8fb6e0;
-    --accent-text: #10141a;
-    --gold: #d2ae64;
-    --user-bubble: #2c4f73;
-    --user-text: #f3f6fa;
-    --border: #33363f;
+    --bg: #17141a;
+    --surface: #221e24;
+    --text: #ece8ea;
+    --muted: #aba3a6;
+    --brand: #6e0a22;
+    --brand-hover: #8a1532;
+    --brand-text: #ffffff;
+    --brand-soft: #e9c3cc;
+    --strip: #2a2529;
+    --strip-text: #ece8ea;
+    --link: #eba2b3;
+    --user-bubble: #7a1530;
+    --user-text: #ffffff;
+    --border: #3a3337;
     --error-bg: #3a1f22;
     --error-text: #f2b8b8;
     color-scheme: dark;
@@ -46,75 +57,136 @@ body {
   line-height: 1.5;
 }
 
-a {
-  color: var(--accent);
+body {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 
-.shell {
+a {
+  color: var(--link);
+}
+
+/* Header band */
+
+.band {
+  background: var(--brand);
+  color: var(--brand-text);
+}
+
+.band-inner {
   max-width: 720px;
   margin: 0 auto;
-  min-height: 100dvh;
+  padding: 8px 16px 14px;
+}
+
+.utility {
+  display: flex;
+  justify-content: flex-end;
+  gap: 18px;
+}
+
+.util-btn {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  color: var(--brand-soft);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.util-btn:hover,
+.util-btn:focus-visible {
+  color: var(--brand-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.mark {
+  width: 34px;
+  height: 41px;
+  flex: none;
+  color: var(--brand-text);
+}
+
+.brand h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  font-weight: bold;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.tagline {
+  margin: 2px 0 0;
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--brand-soft);
+}
+
+/* Gray navigation strip */
+
+.strip {
+  background: var(--strip);
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 4px;
+}
+
+.strip button,
+.strip a {
+  background: none;
+  border: none;
+  padding: 9px 9px;
+  color: var(--strip-text);
+  font: inherit;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.strip button:hover:not(:disabled),
+.strip a:hover {
+  background: var(--surface);
+}
+
+.strip button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Main column */
+
+.shell {
+  flex: 1;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   padding: 0 16px;
 }
 
-.top {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: var(--bg);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 0 10px;
-  border-bottom: 1px solid var(--border);
-}
-
-.top h1 {
-  margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.5rem;
-  letter-spacing: 0.01em;
-}
-
-.top h1::before {
-  content: "✠ ";
-  color: var(--gold);
-}
-
-.sub {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.top-actions {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.link-btn {
-  background: none;
-  border: none;
-  padding: 4px 0;
-  color: var(--accent);
-  font: inherit;
-  font-size: 0.9rem;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 .contact {
-  margin-top: 12px;
+  margin-top: 14px;
   padding: 14px 16px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-top: 3px solid var(--brand);
+  border-radius: 4px;
   font-size: 0.95rem;
 }
 
@@ -140,10 +212,11 @@ a {
 }
 
 .welcome h2 {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--serif);
   font-weight: normal;
   font-size: 1.6rem;
   margin: 8px 0 4px;
+  color: var(--link);
 }
 
 .welcome p {
@@ -162,7 +235,8 @@ a {
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-left: 4px solid var(--brand);
+  border-radius: 4px;
   padding: 12px 14px;
   font: inherit;
   font-size: 0.95rem;
@@ -171,7 +245,7 @@ a {
 
 .chip:hover,
 .chip:focus-visible {
-  border-color: var(--gold);
+  background: var(--strip);
 }
 
 .bubble {
@@ -207,7 +281,7 @@ a {
 .bubble.assistant blockquote {
   margin: 8px 0;
   padding-left: 12px;
-  border-left: 3px solid var(--gold);
+  border-left: 3px solid var(--brand);
   color: var(--muted);
 }
 
@@ -226,9 +300,11 @@ a {
   background: var(--error-bg);
   color: var(--error-text);
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: 4px;
   font-size: 0.95rem;
 }
+
+/* Composer */
 
 .composer {
   position: sticky;
@@ -247,7 +323,7 @@ a {
   max-height: 160px;
   field-sizing: content;
   padding: 11px 14px;
-  border-radius: 12px;
+  border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
@@ -255,19 +331,24 @@ a {
 }
 
 .composer textarea:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--brand);
   outline-offset: 1px;
 }
 
 .send {
-  padding: 0 18px;
-  border-radius: 12px;
+  padding: 0 22px;
+  border-radius: 999px;
   border: none;
-  background: var(--accent);
-  color: var(--accent-text);
+  background: var(--brand);
+  color: var(--brand-text);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+
+.send:hover:not(:disabled) {
+  background: var(--brand-hover);
 }
 
 .send:disabled {
