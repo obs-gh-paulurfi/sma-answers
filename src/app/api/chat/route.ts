@@ -1,7 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { BetaMessageParam } from "@anthropic-ai/sdk/resources/beta/messages/messages";
+import type {
+  BetaMessageParam,
+  BetaToolResultBlockParam,
+} from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import { systemPrompt, todayBlock } from "@/lib/systemPrompt";
 import { allowRequest } from "@/lib/rateLimit";
+import { magisteriumKey, readQuery, searchMagisterium, searchTool } from "@/lib/magisterium";
 
 export const runtime = "nodejs";
 export const maxDuration = 120; // seconds; tool lookups can take a while
@@ -9,11 +13,11 @@ export const maxDuration = 120; // seconds; tool lookups can take a while
 const MODEL = process.env.ANTHROPIC_MODEL || "claude-opus-5-5";
 const EFFORT = (process.env.SMA_EFFORT || "medium") as "low" | "medium" | "high";
 const RATE_LIMIT = Number(process.env.SMA_RATE_LIMIT) || 20;
-const MCP_URL = process.env.MAGISTERIUM_MCP_URL || "https://mcp.magisterium.com";
 
 const MAX_TURNS = 20;
 const MAX_CHARS = 2000;
-const MAX_CONTINUATIONS = 4;
+const MAX_SEARCH_ROUNDS = 5;
+const MAX_STREAM_RETRIES = 2;
 
 const client = new Anthropic();
 
@@ -49,14 +53,8 @@ function parseTurns(body: unknown): ChatTurn[] | null {
   return turns;
 }
 
-function statusFor(toolName: string): string {
-  if (/reading/i.test(toolName)) return "Looking up the readings…";
-  if (/saint|martyrology/i.test(toolName)) return "Looking up the saint…";
-  return "Searching Church sources…";
-}
-
 export async function POST(req: Request) {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.ANTHROPIC_API_KEY || !magisteriumKey()) {
     return Response.json({ error: "SMAnswers isn't configured yet." }, { status: 500 });
   }
 
@@ -87,49 +85,79 @@ export async function POST(req: Request) {
       // only ever grows, so nothing earlier is edited.
       let messages: BetaMessageParam[] = turns.map((t) => ({ role: t.role, content: t.content }));
 
+      let sentText = false;
+      let needsBreak = false;
+      let retries = 0;
+
       try {
-        for (let attempt = 0; attempt <= MAX_CONTINUATIONS; attempt++) {
+        for (let round = 0; round <= MAX_SEARCH_ROUNDS; round++) {
           const stream = client.beta.messages.stream(
             {
               model: MODEL,
               max_tokens: 16000,
-              betas: ["mcp-client-2025-11-20", "server-side-fallback-2026-07-01"],
+              betas: ["server-side-fallback-2026-07-01"],
               fallbacks: "default",
               output_config: { effort: EFFORT },
               system: [
                 { type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } },
                 { type: "text", text: todayBlock() },
               ],
-              mcp_servers: [
-                {
-                  type: "url",
-                  url: MCP_URL,
-                  name: "magisterium",
-                  authorization_token: process.env.MAGISTERIUM_MCP_TOKEN || undefined,
-                },
-              ],
-              tools: [{ type: "mcp_toolset", mcp_server_name: "magisterium" }],
+              tools: [searchTool],
+              // On the last round, answer with what has been found so far.
+              ...(round === MAX_SEARCH_ROUNDS ? { tool_choice: { type: "none" as const } } : {}),
               messages,
             },
             { signal: req.signal },
           );
 
-          for await (const event of stream) {
-            if (event.type === "content_block_start" && event.content_block.type === "mcp_tool_use") {
-              send({ type: "status", text: statusFor(event.content_block.name) });
-            } else if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-              send({ type: "text", text: event.delta.text });
+          let message;
+          try {
+            for await (const event of stream) {
+              if (event.type === "content_block_start" && event.content_block.type === "tool_use") {
+                send({ type: "status", text: "Searching Church sources…" });
+              } else if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+                if (needsBreak) {
+                  send({ type: "text", text: "\n\n" });
+                  needsBreak = false;
+                }
+                send({ type: "text", text: event.delta.text });
+                sentText = true;
+              }
             }
-          }
-
-          const message = await stream.finalMessage();
-
-          if (message.stop_reason === "pause_turn") {
-            // The server-side tool loop hit its step limit; send the turn
-            // back as-is and it resumes where it left off.
-            messages = [...messages, { role: "assistant", content: message.content }];
+            message = await stream.finalMessage();
+          } catch (err) {
+            // A streamed tool input that isn't valid JSON: re-issue the turn.
+            if (err instanceof Anthropic.APIError || req.signal.aborted || retries >= MAX_STREAM_RETRIES) throw err;
+            retries++;
+            round--;
             continue;
           }
+
+          if (message.stop_reason === "tool_use") {
+            const uses = message.content.filter((b) => b.type === "tool_use");
+            const results: BetaToolResultBlockParam[] = await Promise.all(
+              uses.map(async (use) => {
+                const query = use.name === searchTool.name ? readQuery(use.input) : null;
+                const outcome = query
+                  ? await searchMagisterium(query, req.signal)
+                  : { content: "Invalid search request: give a non-empty query under 500 characters.", isError: true };
+                return {
+                  type: "tool_result" as const,
+                  tool_use_id: use.id,
+                  content: outcome.content,
+                  ...(outcome.isError ? { is_error: true } : {}),
+                };
+              }),
+            );
+            messages = [
+              ...messages,
+              { role: "assistant", content: message.content },
+              { role: "user", content: results },
+            ];
+            if (sentText) needsBreak = true;
+            continue;
+          }
+
           if (message.stop_reason === "refusal") {
             send({
               type: "text",
