@@ -6,7 +6,12 @@ export default function Home() {
     <Chat
       appName={parish.appName}
       parishName={parish.name}
-      contact={{ phone: parish.officePhone, email: parish.officeEmail, website: parish.website }}
+      contact={{
+        phone: parish.officePhone,
+        email: parish.officeEmail,
+        website: parish.website,
+        emergency: parish.emergencyPhone,
+      }}
     />
   );
 }

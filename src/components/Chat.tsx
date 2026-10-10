@@ -9,7 +9,7 @@ type Turn = { role: "user" | "assistant"; content: string };
 type Props = {
   appName: string;
   parishName: string;
-  contact: { phone: string; email: string; website: string };
+  contact: { phone: string; email: string; website: string; emergency: string };
 };
 
 const SUGGESTIONS = [
@@ -146,6 +146,12 @@ export default function Chat({ appName, parishName, contact }: Props) {
             {!isPlaceholder(contact.phone) && (
               <li>
                 Call: <a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}>{contact.phone}</a>
+              </li>
+            )}
+            {!isPlaceholder(contact.emergency) && (
+              <li>
+                Sacramental emergency after hours:{" "}
+                <a href={`tel:${contact.emergency.replace(/[^\d+]/g, "")}`}>{contact.emergency}</a>
               </li>
             )}
             {!isPlaceholder(contact.email) && (

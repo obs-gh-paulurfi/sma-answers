@@ -8,7 +8,7 @@ A mobile-friendly Q&A site for St. Michael's parishioners. People ask about the 
 
 - **`src/app/api/chat/route.ts`**: the only server code. It sends the conversation to the Claude API with Magisterium attached as a remote MCP server (`https://mcp.magisterium.com`), and streams the answer back to the browser. API keys stay on the server.
 - **`src/lib/systemPrompt.ts`**: SMAnswers' instructions. It covers voice, citation rules, when to hand off to a priest or the parish office (personal sacramental eligibility, marriage and annulment questions, specific sins, Confession), and crisis and abuse-disclosure safety rules.
-- **`src/config/parish.ts`**: parish details (Mass and Confession times, office contacts, ministries). **Fill in every `[placeholder]` before launch.** Until a value is filled in, SMAnswers tells people to contact the office instead of guessing.
+- **`src/config/parish.ts`**: parish details (Mass and Confession times, office contacts, ministries). Most details were gathered from saintmichaelcc.org in October 2026; anything still in `[brackets]` is unfilled, and SMAnswers tells people to contact the office instead of guessing.
 - **`src/components/Chat.tsx`**: the chat page, with starter questions, a "Talk to a person" panel, and a disclaimer.
 
 ## Run it locally
@@ -40,7 +40,7 @@ This is a public page that spends API credit, so:
 
 ## Before launch
 
-- [ ] Fill in `src/config/parish.ts`.
+- [ ] Confirm the details in `src/config/parish.ts` (especially Mass and Confession times) and fill the remaining `[placeholders]`: office email and Returning Catholics meeting time.
 - [ ] Have the Director of Faith Formation (and the pastor, as appropriate) review the instructions in `src/lib/systemPrompt.ts` and try the app.
 - [ ] Ask a set of test questions, including hand-off cases (Communion after remarriage, "is this a mortal sin?"), and check the citations against the sources.
 - [ ] Set the Anthropic Console spend limit.
