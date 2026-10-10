@@ -140,14 +140,15 @@ export default function Chat({ appName, parishName, contact }: Props) {
             </button>
           </div>
           <div className="brand">
-            <svg className="mark" viewBox="0 0 40 48" aria-hidden="true">
-              <circle cx="20" cy="14" r="9" fill="none" stroke="currentColor" strokeWidth="2.2" />
-              <path d="M20 2v44M11 14h18" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
-            </svg>
-            <div>
-              <h1>{appName}</h1>
-              <p className="tagline">{parishName}</p>
-            </div>
+            <img
+              className="logo"
+              src="/parish-logo.png"
+              alt={parishName}
+              width={351}
+              height={83}
+            />
+            <h1>{appName}</h1>
+            <p className="tagline">Ask about the faith and parish life</p>
           </div>
         </div>
       </header>
